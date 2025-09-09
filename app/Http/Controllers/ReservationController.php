@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Reservation;
 use App\Models\Room;
+use Illuminate\Support\Facades\Mail;
 
 class ReservationController extends Controller
 {
@@ -59,9 +60,19 @@ class ReservationController extends Controller
             $validated['payment_proof'] = $request->file('payment_proof')->store('payment_proofs', 'public');
         }
 
-        Reservation::create($validated);
+        // Validate and create reservation
+        $reservation = Reservation::create($validated);
 
-        return redirect()->back()->with('success', 'Your booking was successful!');
+        // Send confirmation email to user
+        Mail::raw(
+            "Hi {$reservation->name},\n\nThank you for booking at So Hu Beach Club Resort! Your reservation has been received. We will contact you soon for confirmation.\n\nBest regards,\nSo Hu Beach Club Resort Team",
+            function ($message) use ($reservation) {
+                $message->to($reservation->email)
+                        ->subject('Booking Confirmation');
+            }
+        );
+
+        return redirect()->back()->with('success', 'Your booking was successful! Please check your email for confirmation.');
     }
 
     /**
