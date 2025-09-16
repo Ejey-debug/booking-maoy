@@ -178,10 +178,10 @@
         let qrCodeImage = document.getElementById("qrCodeImage");
 
         if (method === "gcash") {
-            qrCodeImage.src = "{{ asset('images/gcash-qr.png') }}"; // Replace with your GCash QR
+            qrCodeImage.src = "{{ asset('images/gcash.jpg') }}"; // Replace with your GCash QR
             qrSection.style.display = "block";
         } else if (method === "maya") {
-            qrCodeImage.src = "{{ asset('images/maya-qr.png') }}"; // Replace with your Maya QR
+            qrCodeImage.src = "{{ asset('images/maya.jpg') }}"; // Replace with your Maya QR
             qrSection.style.display = "block";
         }
     }

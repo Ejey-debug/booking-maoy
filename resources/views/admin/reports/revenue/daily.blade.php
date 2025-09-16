@@ -4,7 +4,12 @@
 @section('content')
 <div class="container py-4">
     <h2 class="mb-4 fw-bold">Daily Revenue Summary</h2>
-    <div class="card shadow">
+    <div class="d-flex justify-content-end mb-2">
+        <button onclick="printDailyRevenue()" class="btn btn-outline-primary">
+            <i class="bi bi-printer me-1"></i> Print
+        </button>
+    </div>
+    <div class="card shadow" id="printArea">
         <div class="card-body">
             <form method="GET" class="row g-2 mb-3 align-items-end">
                 <div class="col-auto">
@@ -59,6 +64,40 @@
         </div>
     </div>
 </div>
+
+<!-- Print Script -->
+<script>
+function printDailyRevenue() {
+    var printContents = document.getElementById("printArea").innerHTML;
+    var originalContents = document.body.innerHTML;
+
+    document.body.innerHTML = printContents;
+    window.print();
+    document.body.innerHTML = originalContents;
+    location.reload(); // reload page to restore JS functionality
+}
+</script>
+
+<!-- Print Styles -->
+<style>
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    #printArea, #printArea * {
+        visibility: visible;
+    }
+    #printArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+    button, a, form {
+        display: none !important; /* Hide buttons, links, and form */
+    }
+}
+</style>
 @endsection
 
 <a class="dropdown-item" href="{{ url('/admin/reports/revenue/daily') }}">
