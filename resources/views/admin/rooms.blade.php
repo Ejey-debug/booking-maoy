@@ -3,12 +3,11 @@
 @section('content')
 <div class="container py-5">
     <!-- Back button -->
-    <div class="mb-3">
-        <a href="{{ url()->previous() }}" class="btn btn-outline-secondary d-inline-flex align-items-center">
+    <div class="d-flex justify-content-between mb-3">
+        <a href="{{ url('/admin/dashboard') }}" class="btn btn-outline-secondary d-inline-flex align-items-center">
             <i class="bi bi-arrow-left me-2"></i> Back
         </a>
     </div>
-
     <h2 class="mb-4 text-center">Manage Rooms & Availability</h2>
     <div class="card shadow bg-white bg-opacity-75">
         <div class="card-body">
@@ -41,6 +40,7 @@
                                         <div class="mb-2 p-2 border rounded">
                                             <div>
                                                 <strong>Guest:</strong> {{ $reservation->name }}<br>
+                                                <strong>Number of Guests:</strong> {{ $reservation->guests ?? $reservation->number_of_guests ?? 'N/A' }}<br>
                                                 <strong>Check-in:</strong> {{ $reservation->check_in_date }}<br>
                                                 <strong>Check-out:</strong> {{ $reservation->check_out_date }}<br>
                                                 <strong>Status:</strong>

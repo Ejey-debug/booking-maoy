@@ -86,25 +86,22 @@
                     <input type="hidden" name="check_out_date" value="{{ $check_out_date }}" />
                     <input type="hidden" name="payment_method" id="hiddenPaymentMethod" value="gcash" />
 
-                    <!-- Guest Info -->
+                    <!-- Add-ons Section -->
                     <div class="mb-3">
-                        <label class="form-label">Full Name</label>
-                        <input type="text" name="name" class="form-control" required />
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Email</label>
-                        <input type="email" name="email" class="form-control" required />
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Contact Number</label>
-                        <input type="text" name="contact" class="form-control" maxlength="11" required />
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Number of Nights</label>
-                        <input type="number" name="nights" class="form-control" min="1" value="1" required />
+                        <label class="form-label">Add Ons</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="addons[]" value="Jetski Rental" id="addonJetski">
+                            <label class="form-check-label" for="addonJetski">Jetski Rental</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="addons[]" value="Atv" id="addonAtv">
+                            <label class="form-check-label" for="addonAtv">Atv</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="addons[]" value="None" id="addonNone">
+                            <label class="form-check-label" for="addonNone">None</label>
+                        </div>
+                        <!-- Add more add-ons as needed -->
                     </div>
 
                     <div class="mb-2">
@@ -112,11 +109,46 @@
                         <input type="file" class="form-control" id="modalPaymentProof" name="payment_proof" accept="image/*" required>
                     </div>
 
+                    <!-- Terms and Conditions Checkbox -->
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="terms" name="terms" required>
+                        <label class="form-check-label small" for="terms">
+                            I accept the
+                            <button type="button" class="btn btn-link p-0 align-baseline" data-bs-toggle="modal" data-bs-target="#termsModal">
+                                Terms & Conditions
+                            </button>
+                        </label>
+                    </div>
+
                     <div class="d-flex justify-content-end gap-2">
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-success">Confirm & Book</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Terms & Conditions Modal -->
+<div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="termsModalLabel">Terms & Conditions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <ul>
+                    <li>All bookings require a 50% downpayment to confirm.</li>
+                    <li>Proof of payment must be uploaded for verification.</li>
+                    <li>Bookings are subject to availability and confirmation by management.</li>
+                    <li>Cancellation and refund policies apply as stated by the resort.</li>
+                    <li>Guests must provide valid contact information.</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -153,6 +185,30 @@
             qrSection.style.display = "block";
         }
     }
+
+    // Get modal elements
+    const confirmationModal = document.getElementById('confirmationModal');
+    const termsModal = document.getElementById('termsModal');
+    let confirmationModalInstance = null;
+
+    // Save the instance when confirmation modal is shown
+    confirmationModal.addEventListener('shown.bs.modal', function () {
+        confirmationModalInstance = bootstrap.Modal.getInstance(confirmationModal);
+    });
+
+    // When Terms modal is hidden, re-show the confirmation modal
+    termsModal.addEventListener('hidden.bs.modal', function () {
+        if (confirmationModalInstance) {
+            confirmationModalInstance.show();
+        }
+    });
+
+    // When Terms modal is shown, hide the confirmation modal
+    termsModal.addEventListener('show.bs.modal', function () {
+        if (confirmationModalInstance) {
+            confirmationModalInstance.hide();
+        }
+    });
 </script>
 
 
@@ -199,9 +255,9 @@
                     <a href="#" class="text-dark text-decoration-underline">Privacy Policy</a>.
                 </small>
                 <div class="mt-3">
-                    <a href="#"><i class="bi bi-facebook me-3 fs-5"></i></a>
-                    <a href="#"><i class="bi bi-instagram me-3 fs-5"></i></a>
-                    <a href="#"><i class="bi bi-tiktok fs-5"></i></a>
+                    <a href="https://facebook.com/yourpage" target="_blank"><i class="bi bi-facebook me-3 fs-5"></i></a>
+                    <a href="https://instagram.com/yourprofile" target="_blank"><i class="bi bi-instagram me-3 fs-5"></i></a>
+                    <a href="https://tiktok.com/@yourprofile" target="_blank"><i class="bi bi-tiktok fs-5"></i></a>
                 </div>
             </div>
         </div>

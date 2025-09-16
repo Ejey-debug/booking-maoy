@@ -53,8 +53,8 @@
                             </div>
 
                             <div class="mb-4">
-                                <label for="nights" class="form-label">Number of Guests</label>
-                                <input type="number" class="form-control" id="nights" name="nights" min="1" required />
+                                <label for="guests" class="form-label">Number of Guests</label>
+                                <input type="number" class="form-control" id="guests" name="guests" min="1" required />
                             </div>
 
                             <div class="d-grid">
@@ -111,9 +111,9 @@
                     <a href="#" class="text-dark text-decoration-underline">Privacy Policy</a>.
                 </small>
                 <div class="mt-3">
-                    <a href="#"><i class="bi bi-facebook me-3 fs-5"></i></a>
-                    <a href="#"><i class="bi bi-instagram me-3 fs-5"></i></a>
-                    <a href="#"><i class="bi bi-tiktok fs-5"></i></a>
+                    <a href="https://facebook.com/yourpage" target="_blank"><i class="bi bi-facebook me-3 fs-5"></i></a>
+                    <a href="https://instagram.com/yourprofile" target="_blank"><i class="bi bi-instagram me-3 fs-5"></i></a>
+                    <a href="https://tiktok.com/@yourprofile" target="_blank"><i class="bi bi-tiktok fs-5"></i></a>
                 </div>
             </div>
         </div>

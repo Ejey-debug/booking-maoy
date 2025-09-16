@@ -22,7 +22,8 @@
                         <th>Contact</th>
                         <th>Check-in</th>
                         <th>Check-out</th>
-                        <th>Nights</th>
+                        <th>Guests</th>
+                        <th>Add-ons</th>
                         <th>Booked At</th>
                     </tr>
                 </thead>
@@ -40,12 +41,23 @@
                             <td>{{ $reservation->contact }}</td>
                             <td>{{ Carbon::parse($reservation->check_in_date)->format('Y-m-d h:i A') }}</td>
                             <td>{{ Carbon::parse($reservation->check_out_date)->format('Y-m-d h:i A') }}</td>
-                            <td>{{ $reservation->nights }}</td>
+                            <td>{{ $reservation->guests }}</td>
+                            <td>
+                                @if(!empty($reservation->addons))
+                                    @if(is_array($reservation->addons))
+                                        {{ implode(', ', $reservation->addons) }}
+                                    @else
+                                        {{ $reservation->addons }}
+                                    @endif
+                                @else
+                                    <span class="text-muted">None</span>
+                                @endif
+                            </td>
                             <td>{{ $reservation->created_at->format('Y-m-d h:i A') }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="text-center">No reservations found.</td>
+                            <td colspan="10" class="text-center">No reservations found.</td>
                         </tr>
                     @endforelse
                 </tbody>

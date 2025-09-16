@@ -6,7 +6,7 @@
 <section style="position: relative; width: 100%; height: 50vh; overflow: hidden;">
 
     <!-- 🖼 Background Image -->
-    <img src="{{ asset('images/homebg.jpg') }}" 
+    <img src="{{ asset('images/homebg.jpg') }}"
          alt="Hero Image"
          style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1;" />
 
@@ -19,7 +19,7 @@
         <h1 class="display-3 fw-bold mb-3">Welcome to So Hu<br />Beach Club.</h1>
         <p class="lead mb-4">
             Discover comfort, elegance, and unforgettable memories along the serene shores of So Hu Beach.
-        
+
 </section>
 
 <!-- About Section -->
@@ -106,13 +106,13 @@
                             <button class="btn btn-dark rounded-pill px-4">Subscribe</button>
                         </form>
                         <small class="d-block mt-2 text-muted">
-                            By subscribing to our mailing list, you agree with our 
+                            By subscribing to our mailing list, you agree with our
                             <a href="#" class="text-dark text-decoration-underline">Privacy Policy</a>.
                         </small>
                         <div class="mt-3">
-                            <a href="#"><i class="bi bi-facebook me-3 fs-5"></i></a>
-                            <a href="#"><i class="bi bi-instagram me-3 fs-5"></i></a>
-                            <a href="#"><i class="bi bi-tiktok fs-5"></i></a>
+                            <a href="https://facebook.com/yourpage" target="_blank"><i class="bi bi-facebook me-3 fs-5"></i></a>
+                            <a href="https://instagram.com/yourprofile" target="_blank"><i class="bi bi-instagram me-3 fs-5"></i></a>
+                            <a href="https://tiktok.com/@yourprofile" target="_blank"><i class="bi bi-tiktok fs-5"></i></a>
                         </div>
                     </div>
                 </div>
@@ -123,7 +123,7 @@
             </div>
         </footer>
 
-        
+
 </section>
 
 @endsection

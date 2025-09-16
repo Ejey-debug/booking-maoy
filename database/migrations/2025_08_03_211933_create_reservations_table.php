@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('contact');
             $table->date('check_in_date');
             $table->date('check_out_date');
-            $table->integer('nights');
+            $table->integer('guests');
             $table->timestamps();
         });
     }

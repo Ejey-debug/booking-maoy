@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Reservation;
 use App\Models\Room;
+use App\Models\User;
 use Illuminate\Support\Facades\Mail;
 
 class ReservationController extends Controller
@@ -51,7 +52,7 @@ class ReservationController extends Controller
             'contact'        => 'required|string|max:11',
             'check_in_date'  => 'required|date',
             'check_out_date' => 'required|date|after:check_in_date',
-            'nights'         => 'required|integer|min:1',
+            'guests'         => 'required|integer|min:1',
             'payment_proof'  => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
@@ -60,8 +61,21 @@ class ReservationController extends Controller
             $validated['payment_proof'] = $request->file('payment_proof')->store('payment_proofs', 'public');
         }
 
-        // Validate and create reservation
+        // Calculate total price
+        $room = Room::find($request->room_id);
+        $nights = \Carbon\Carbon::parse($request->check_out_date)->diffInDays(\Carbon\Carbon::parse($request->check_in_date));
+        $calculatedTotalPrice = $room->price * $nights;
+        $validated['total_price'] = $calculatedTotalPrice;
+
+        // Create reservation (only once, after total_price is set)
         $reservation = Reservation::create($validated);
+
+        // Create a new user account
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => bcrypt('defaultpassword'), // or generate a random password
+        ]);
 
         // Send confirmation email to user
         Mail::raw(
@@ -72,7 +86,11 @@ class ReservationController extends Controller
             }
         );
 
-        return redirect()->back()->with('success', 'Your booking was successful! Please check your email for confirmation.');
+        // Redirect to availability page with success message
+        return redirect()->route('availability', [
+            'check_in_date' => $request->check_in_date,
+            'check_out_date' => $request->check_out_date
+        ])->with('success', 'Your booking was successful! Please check your email for confirmation.');
     }
 
     /**
@@ -84,5 +102,35 @@ class ReservationController extends Controller
         $reservation->save();
 
         return redirect()->back()->with('success', 'Reservation marked as completed.');
+    }
+
+    /**
+     * Display a listing of the bookings.
+     */
+    public function bookings(Request $request)
+    {
+        $query = \App\Models\Reservation::with('room')->orderBy('created_at', 'desc');
+
+        // Filter by date if provided
+        if ($request->filled('filter_date')) {
+            $query->whereDate('created_at', $request->filter_date);
+        }
+
+        // Search by guest name, room name, email, or contact if provided
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('contact', 'like', "%{$search}%")
+                  ->orWhereHas('room', function($qr) use ($search) {
+                      $qr->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $bookings = $query->get();
+
+        return view('admin.bookings', compact('bookings'));
     }
 }

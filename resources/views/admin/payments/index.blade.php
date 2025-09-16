@@ -17,7 +17,6 @@
                     <tr>
                         <th>#</th>
                         <th>Room</th>
-                        <th>Guest</th>
                         <th>Email</th>
                         <th>Contact</th>
                         <th>Booked At</th>
@@ -32,7 +31,6 @@
                         <tr>
                             <td>{{ $loop->iteration }}</td>
                             <td>{{ $reservation->room->name ?? 'N/A' }}</td>
-                            <td>{{ $reservation->name }}</td>
                             <td>{{ $reservation->email }}</td>
                             <td>{{ $reservation->contact }}</td>
                             <td>{{ $reservation->created_at->format('Y-m-d h:i A') }}</td>
@@ -46,7 +44,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center">No active proof of payments found.</td>
+                            <td colspan="6" class="text-center">No active proof of payments found.</td>
                         </tr>
                     @endforelse
                 </tbody>
