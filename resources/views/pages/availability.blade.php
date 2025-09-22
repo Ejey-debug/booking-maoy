@@ -27,7 +27,7 @@
                     @if($room->image)
                         <img src="{{ asset('storage/' . $room->image) }}" class="card-img-top" alt="{{ $room->name }}" style="height: 200px; object-fit: cover;">
                     @else
-                        <img src="{{ asset('images/default-room.jpg') }}" class="card-img-top" alt="Default Room" style="height: 200px; object-fit: cover;">
+                        <img src="{{ asset('images/deluxe-room.jpg') }}" class="card-img-top" alt="Default Room" style="height: 200px; object-fit: cover;">
                     @endif
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title">{{ $room->name }}</h5>
@@ -77,7 +77,8 @@
                     <p>Scan this QR Code to pay:</p>
                     <img id="qrCodeImage" src="" alt="QR Code" style="max-width: 200px;" />
                 </div>
-            </div>
+
+
             <div class="modal-footer">
                 <form id="bookRoomForm" method="POST" action="{{ url('/reserve') }}" class="w-100" enctype="multipart/form-data">
                     @csrf
@@ -162,14 +163,42 @@
 @endif
 
 <script>
+    // Add-on prices (must match backend)
+    const addonPrices = {
+        'Jetski Rental': 5000,
+        'Atv': 1000
+    };
+
+    let baseRoomPrice = 0;
+
     function showConfirmationModal(roomId, roomName, roomPrice) {
         document.getElementById("modalRoomId").value = roomId;
         document.getElementById("modalRoomName").textContent = roomName;
         document.getElementById("modalRoomPrice").textContent = parseFloat(roomPrice).toFixed(2);
         document.getElementById("modalRoomDownpayment").textContent = (roomPrice / 2).toFixed(2);
+        baseRoomPrice = parseFloat(roomPrice);
+        updateTotalPrice();
         var modal = new bootstrap.Modal(document.getElementById("confirmationModal"));
         modal.show();
     }
+
+    function updateTotalPrice() {
+        let total = baseRoomPrice;
+        document.querySelectorAll('input[name="addons[]"]:checked').forEach(function(checkbox) {
+            if (addonPrices[checkbox.value]) {
+                total += addonPrices[checkbox.value];
+            }
+        });
+        document.getElementById("modalRoomPrice").textContent = total.toFixed(2);
+        document.getElementById("modalRoomDownpayment").textContent = (total / 2).toFixed(2);
+    }
+
+    // Listen for changes on add-on checkboxes (inside modal)
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('input[name="addons[]"]').forEach(function(checkbox) {
+            checkbox.addEventListener('change', updateTotalPrice);
+        });
+    });
 
     function selectPayment(method) {
         document.getElementById("hiddenPaymentMethod").value = method;
@@ -207,6 +236,44 @@
     termsModal.addEventListener('show.bs.modal', function () {
         if (confirmationModalInstance) {
             confirmationModalInstance.hide();
+        }
+    });
+
+    // AJAX booking form submission
+    document.addEventListener('DOMContentLoaded', function() {
+        const bookRoomForm = document.getElementById('bookRoomForm');
+        if (bookRoomForm) {
+            bookRoomForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(bookRoomForm);
+                fetch(bookRoomForm.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+                    },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Show success message in modal or alert
+                        alert(data.message);
+                        // Optionally close modal or reset form
+                        bookRoomForm.reset();
+                        // Optionally reload or update availability
+                        window.location.reload();
+                    } else if (data.errors) {
+                        // Show validation errors
+                        alert('Error: ' + JSON.stringify(data.errors));
+                    } else {
+                        alert('An unexpected error occurred.');
+                    }
+                })
+                .catch(error => {
+                    alert('Booking failed. Please try again.');
+                });
+            });
         }
     });
 </script>

@@ -25,14 +25,6 @@ class ContactController extends Controller
             }
         );
 
-        // Send auto-reply to user
-        Mail::raw(
-            "Hi {$data['name']},\n\nThank you for contacting So Hu Beach Club Resort! Your message has been received. We will reply as soon as possible.\n\nBest regards,\nSo Hu Beach Club Resort Team",
-            function ($message) use ($data) {
-                $message->to($data['email'])
-                        ->subject('We received your message!');
-            }
-        );
 
         return back()->with('success', 'Your message has been sent! Please wait for our reply.');
     }

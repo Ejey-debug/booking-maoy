@@ -45,6 +45,7 @@ class ReservationController extends Controller
      */
     public function store(Request $request)
     {
+
         $validated = $request->validate([
             'room_id'        => 'required|exists:rooms,id',
             'name'           => 'required|string|max:255',
@@ -54,6 +55,8 @@ class ReservationController extends Controller
             'check_out_date' => 'required|date|after:check_in_date',
             'guests'         => 'required|integer|min:1',
             'payment_proof'  => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'addons'         => 'array',
+            'addons.*'       => 'string',
         ]);
 
         // Handle file upload
@@ -61,11 +64,31 @@ class ReservationController extends Controller
             $validated['payment_proof'] = $request->file('payment_proof')->store('payment_proofs', 'public');
         }
 
-        // Calculate total price
+        // Add-on prices (hardcoded)
+        $addonPrices = [
+            'Jetski Rental' => 5000,
+            'Atv' => 1000,
+            // Add more add-ons and prices as needed
+        ];
+
+        // Calculate add-ons total
+        $selectedAddons = $request->input('addons', []);
+        $addonsTotal = 0;
+        foreach ($selectedAddons as $addon) {
+            if (isset($addonPrices[$addon])) {
+                $addonsTotal += $addonPrices[$addon];
+            }
+        }
+
+        // Calculate total price (room price * nights + add-ons)
         $room = Room::find($request->room_id);
         $nights = \Carbon\Carbon::parse($request->check_out_date)->diffInDays(\Carbon\Carbon::parse($request->check_in_date));
-        $calculatedTotalPrice = $room->price * $nights;
+        $roomTotal = $room->price * $nights;
+        $calculatedTotalPrice = $roomTotal + $addonsTotal;
         $validated['total_price'] = $calculatedTotalPrice;
+
+        // Save selected add-ons as JSON (optional, if you want to store them)
+        $validated['addons'] = json_encode($selectedAddons);
 
         // Create reservation (only once, after total_price is set)
         $reservation = Reservation::create($validated);
