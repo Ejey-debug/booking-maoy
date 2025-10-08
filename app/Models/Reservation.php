@@ -15,7 +15,7 @@ class Reservation extends Model
         'contact',
         'check_in_date',
         'check_out_date',
-        'nights',
+        'guests',
     ];
 
     public function room()

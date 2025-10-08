@@ -16,10 +16,12 @@
 
 <div class="container py-5">
     <h2 class="mb-4 text-center">Room Availability</h2>
-    <div class="mb-3 text-center">
-        <strong>Check-in:</strong> {{ $check_in_date }}<br>
-        <strong>Check-out:</strong> {{ $check_out_date }}
-    </div>
+    @if($check_in_date && $check_out_date)
+        <div class="mb-3 text-center">
+            <strong>Check-in:</strong> {{ $check_in_date }}<br>
+            <strong>Check-out:</strong> {{ $check_out_date }}
+        </div>
+    @endif
     <div class="row">
         @forelse($rooms as $room)
             <div class="col-md-4 mb-4">
@@ -46,8 +48,12 @@
             </div>
         @empty
             <div class="col-12">
-                <div class="alert alert-warning text-center">
-                    No rooms available for your selected dates.
+                <div class="alert alert-{{ $check_in_date && $check_out_date ? 'warning' : 'info' }} text-center">
+                    @if($check_in_date && $check_out_date)
+                        No rooms available for your selected dates.
+                    @else
+                        Please provide your stay details to check which rooms are available.
+                    @endif
                 </div>
             </div>
         @endforelse
@@ -85,6 +91,10 @@
                     <input type="hidden" name="room_id" id="modalRoomId" />
                     <input type="hidden" name="check_in_date" value="{{ $check_in_date }}" />
                     <input type="hidden" name="check_out_date" value="{{ $check_out_date }}" />
+                    <input type="hidden" name="name" value="{{ $name ?? '' }}" />
+                    <input type="hidden" name="email" value="{{ $email ?? '' }}" />
+                    <input type="hidden" name="contact" value="{{ $contact ?? '' }}" />
+                    <input type="hidden" name="guests" value="{{ $guests ?? '' }}" />
                     <input type="hidden" name="payment_method" id="hiddenPaymentMethod" value="gcash" />
 
                     <!-- Add-ons Section -->

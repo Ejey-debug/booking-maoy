@@ -26,35 +26,36 @@
                             <div class="alert alert-success">{{ session('success') }}</div>
                         @endif
 
-                        <form id="reservationForm" method="GET" action="{{ url('/availability') }}">
+                        <form id="reservationForm" method="POST" action="{{ route('availability.store') }}">
+                            @csrf
                             <div class="mb-3">
                                 <label for="name" class="form-label">Full Name</label>
-                                <input type="text" class="form-control" id="name" name="name" required />
+                                <input type="text" class="form-control" id="name" name="name" value="{{ old('name') }}" required />
                             </div>
 
                             <div class="mb-3">
                                 <label for="email" class="form-label">Email Address</label>
-                                <input type="email" class="form-control" id="email" name="email" required />
+                                <input type="email" class="form-control" id="email" name="email" value="{{ old('email') }}" required />
                             </div>
 
                             <div class="mb-3">
                                 <label for="contact" class="form-label">Contact Number</label>
-                                <input type="tel" class="form-control" id="contact" name="contact" required />
+                                <input type="tel" class="form-control" id="contact" name="contact" value="{{ old('contact') }}" required />
                             </div>
 
                             <div class="mb-3">
                                 <label for="check_in_date" class="form-label">Check-in Date</label>
-                                <input type="date" class="form-control" id="check_in_date" name="check_in_date" min="{{ date('Y-m-d') }}" required />
+                                <input type="date" class="form-control" id="check_in_date" name="check_in_date" min="{{ date('Y-m-d') }}" value="{{ old('check_in_date') }}" required />
                             </div>
 
                             <div class="mb-3">
                                 <label for="check_out_date" class="form-label">Check-out Date</label>
-                                <input type="date" class="form-control" id="check_out_date" name="check_out_date" min="{{ date('Y-m-d') }}" required />
+                                <input type="date" class="form-control" id="check_out_date" name="check_out_date" min="{{ date('Y-m-d') }}" value="{{ old('check_out_date') }}" required />
                             </div>
 
                             <div class="mb-4">
                                 <label for="guests" class="form-label">Number of Guests</label>
-                                <input type="number" class="form-control" id="guests" name="guests" min="1" required />
+                                <input type="number" class="form-control" id="guests" name="guests" min="1" value="{{ old('guests') }}" required />
                             </div>
 
                             <div class="d-grid">

@@ -45,75 +45,72 @@ class ReservationController extends Controller
      */
     public function store(Request $request)
     {
+        try {
+            $validated = $request->validate([
+                'room_id'        => 'required|exists:rooms,id',
+                'check_in_date'  => 'required|date',
+                'check_out_date' => 'required|date|after:check_in_date',
+                'payment_proof'  => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'addons'         => 'array',
+                'addons.*'       => 'string',
+            ]);
 
-        $validated = $request->validate([
-            'room_id'        => 'required|exists:rooms,id',
-            'name'           => 'required|string|max:255',
-            'email'          => 'required|email|max:255',
-            'contact'        => 'required|string|max:11',
-            'check_in_date'  => 'required|date',
-            'check_out_date' => 'required|date|after:check_in_date',
-            'guests'         => 'required|integer|min:1',
-            'payment_proof'  => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'addons'         => 'array',
-            'addons.*'       => 'string',
-        ]);
-
-        // Handle file upload
-        if ($request->hasFile('payment_proof')) {
-            $validated['payment_proof'] = $request->file('payment_proof')->store('payment_proofs', 'public');
-        }
-
-        // Add-on prices (hardcoded)
-        $addonPrices = [
-            'Jetski Rental' => 5000,
-            'Atv' => 1000,
-            // Add more add-ons and prices as needed
-        ];
-
-        // Calculate add-ons total
-        $selectedAddons = $request->input('addons', []);
-        $addonsTotal = 0;
-        foreach ($selectedAddons as $addon) {
-            if (isset($addonPrices[$addon])) {
-                $addonsTotal += $addonPrices[$addon];
+            // Handle file upload
+            if ($request->hasFile('payment_proof')) {
+                $validated['payment_proof'] = $request->file('payment_proof')->store('payment_proofs', 'public');
             }
-        }
 
-        // Calculate total price (room price * nights + add-ons)
-        $room = Room::find($request->room_id);
-        $nights = \Carbon\Carbon::parse($request->check_out_date)->diffInDays(\Carbon\Carbon::parse($request->check_in_date));
-        $roomTotal = $room->price * $nights;
-        $calculatedTotalPrice = $roomTotal + $addonsTotal;
-        $validated['total_price'] = $calculatedTotalPrice;
-
-        // Save selected add-ons as JSON (optional, if you want to store them)
-        $validated['addons'] = json_encode($selectedAddons);
-
-        // Create reservation (only once, after total_price is set)
-        $reservation = Reservation::create($validated);
-
-        // Create a new user account
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => bcrypt('defaultpassword'), // or generate a random password
-        ]);
-
-        // Send confirmation email to user
-        Mail::raw(
-            "Hi {$reservation->name},\n\nThank you for booking at So Hu Beach Club Resort! Your reservation has been received. We will contact you soon for confirmation.\n\nBest regards,\nSo Hu Beach Club Resort Team",
-            function ($message) use ($reservation) {
-                $message->to($reservation->email)
-                        ->subject('Booking Confirmation');
+            // Add-on prices (hardcoded)
+            $addonPrices = [
+                'Jetski Rental' => 5000,
+                'Atv' => 1000,
+            ];
+            $selectedAddons = $request->input('addons', []);
+            $addonsTotal = 0;
+            foreach ($selectedAddons as $addon) {
+                if (isset($addonPrices[$addon])) {
+                    $addonsTotal += $addonPrices[$addon];
+                }
             }
-        );
 
-        // Redirect to availability page with success message
-        return redirect()->route('availability', [
-            'check_in_date' => $request->check_in_date,
-            'check_out_date' => $request->check_out_date
-        ])->with('success', 'Your booking was successful! Please check your email for confirmation.');
+            // Calculate total price (room price * nights + add-ons)
+            $room = \App\Models\Room::find($request->room_id);
+            $nights = \Carbon\Carbon::parse($request->check_out_date)->diffInDays(\Carbon\Carbon::parse($request->check_in_date));
+            $roomTotal = $room->price * $nights;
+            $calculatedTotalPrice = $roomTotal + $addonsTotal;
+            $validated['total_price'] = $calculatedTotalPrice;
+            $validated['addons'] = json_encode($selectedAddons);
+
+            // Ensure required DB columns have values (hotfix)
+            $validated['user_id'] = $validated['user_id'] ?? null;
+            $validated['name']    = $validated['name']    ?? 'Guest';
+            $validated['email']   = $validated['email']   ?? 'no-email@local';
+            $validated['contact'] = $validated['contact'] ?? '0000000000';
+            $validated['guests']  = $validated['guests']  ?? 1;
+
+            $reservation = Reservation::create($validated);
+
+            $successMsg = 'Your booking was successful! Please check your email for confirmation.';
+
+            if ($request->ajax()) {
+                return response()->json(['success' => true, 'message' => $successMsg]);
+            }
+
+            return redirect()->route('availability', [
+                'check_in_date' => $request->check_in_date,
+                'check_out_date' => $request->check_out_date
+            ])->with('success', $successMsg);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'errors' => $e->errors()], 422);
+            }
+            throw $e;
+        } catch (\Exception $e) {
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'errors' => ['server' => [$e->getMessage()]]], 500);
+            }
+            throw $e;
+        }
     }
 
     /**

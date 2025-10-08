@@ -26,6 +26,7 @@ Route::post('/contact/send', [ContactController::class, 'send'])->name('contact.
 Route::get('/reserve', [ReservationController::class, 'create'])->name('reserve.create');
 Route::post('/reserve', [ReservationController::class, 'store'])->name('reserve');
 Route::get('/availability', [AvailabilityController::class, 'index'])->name('availability');
+Route::post('/availability', [AvailabilityController::class, 'store'])->name('availability.store');
 
 /*
 | Admin Routes
