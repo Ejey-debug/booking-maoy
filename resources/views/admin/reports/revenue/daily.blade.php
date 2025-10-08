@@ -25,7 +25,35 @@
             @php
                 $date = request('date', \Carbon\Carbon::today()->format('Y-m-d'));
                 $reservations = \App\Models\Reservation::whereDate('created_at', $date)->get();
-                $totalRevenue = $reservations->sum('total_price');
+                // Add-on prices (same as controller)
+                $addonPrices = [
+                    'Jetski Rental' => 5000,
+                    'Atv' => 1000,
+                ];
+                // Sum using total_price when present, otherwise compute from room price * nights + addons
+                $totalRevenue = $reservations->reduce(function($carry, $res) use ($addonPrices) {
+                    $price = 0;
+                    // compute addons total
+                    $addons = json_decode($res->addons ?? '[]', true) ?: [];
+                    $addonsTotal = 0;
+                    foreach ($addons as $a) {
+                        if (isset($addonPrices[$a])) $addonsTotal += $addonPrices[$a];
+                    }
+
+                    if (!is_null($res->total_price)) {
+                        $price = (float) $res->total_price;
+                    } else {
+                        $roomPrice = optional($res->room)->price ?? 0;
+                        try {
+                            $nights = \Carbon\Carbon::parse($res->check_out_date)->diffInDays(\Carbon\Carbon::parse($res->check_in_date));
+                            if ($nights < 1) $nights = 1;
+                        } catch (Exception $e) {
+                            $nights = 1;
+                        }
+                        $price = ($roomPrice * $nights) + $addonsTotal;
+                    }
+                    return $carry + $price;
+                }, 0);
             @endphp
             <div class="mb-3">
                 <h5 class="fw-bold">Date: {{ \Carbon\Carbon::parse($date)->format('F d, Y') }}</h5>
@@ -51,7 +79,35 @@
                             <td>{{ $reservation->name ?? 'N/A' }}</td>
                             <td>{{ $reservation->check_in_date }}</td>
                             <td>{{ $reservation->check_out_date }}</td>
-                            <td>₱{{ number_format($reservation->total_price, 2) }}</td>
+                            @php
+                                // parse addons and compute addon totals
+                                $addons = json_decode($reservation->addons ?? '[]', true) ?: [];
+                                $addonsTotal = 0;
+                                foreach ($addons as $a) {
+                                    if (isset($addonPrices[$a])) $addonsTotal += $addonPrices[$a];
+                                }
+
+                                if (!is_null($reservation->total_price)) {
+                                    $displayTotal = (float) $reservation->total_price;
+                                    $note = '';
+                                } else {
+                                    $roomPrice = optional($reservation->room)->price ?? 0;
+                                    try {
+                                        $nights = \Carbon\Carbon::parse($reservation->check_out_date)->diffInDays(\Carbon\Carbon::parse($reservation->check_in_date));
+                                        if ($nights < 1) $nights = 1;
+                                    } catch (Exception $e) {
+                                        $nights = 1;
+                                    }
+                                    $displayTotal = ($roomPrice * $nights) + $addonsTotal;
+                                    $note = ' <small class="text-muted">(computed)</small>';
+                                }
+                            @endphp
+                            <td>
+                                ₱{{ number_format($displayTotal, 2) }}{!! $note !!}
+                                @if(!empty($addons))
+                                    <div><small class="text-muted">Add-ons: {{ implode(', ', $addons) }} (₱{{ number_format($addonsTotal, 2) }})</small></div>
+                                @endif
+                            </td>
                             <td>{{ $reservation->created_at->format('Y-m-d h:i A') }}</td>
                         </tr>
                     @empty

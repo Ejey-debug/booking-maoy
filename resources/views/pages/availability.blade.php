@@ -24,6 +24,17 @@
     @endif
     <div class="row">
         @forelse($rooms as $room)
+            @php
+                $nights = 1;
+                try {
+                    if(!empty($check_in_date) && !empty($check_out_date)) {
+                        $nights = \Carbon\Carbon::parse($check_out_date)->diffInDays(\Carbon\Carbon::parse($check_in_date));
+                        if($nights < 1) $nights = 1;
+                    }
+                } catch (Exception $e) {
+                    $nights = 1;
+                }
+            @endphp
             <div class="col-md-4 mb-4">
                 <div class="card shadow h-100">
                     @if($room->image)
@@ -40,7 +51,7 @@
                         </p>
                         <span class="badge bg-success mb-2">Available</span>
                         <button class="btn btn-primary mt-auto"
-                            onclick="showConfirmationModal('{{ $room->id }}', '{{ $room->name }}', '{{ $room->price }}')">
+                            onclick="showConfirmationModal('{{ $room->id }}', '{{ $room->name }}', '{{ $room->price }}', '{{ $nights }}')">
                             Book This Room
                         </button>
                     </div>
@@ -70,6 +81,8 @@
             </div>
             <div class="modal-body">
                 <p><strong>Room:</strong> <span id="modalRoomName"></span></p>
+                <p><strong>Price per night:</strong> ₱<span id="modalRoomPricePerNight"></span></p>
+                <p><strong>Nights:</strong> <span id="modalNights"></span></p>
                 <p><strong>Total Price:</strong> ₱<span id="modalRoomPrice"></span></p>
                 <p><strong>50% Downpayment:</strong> ₱<span id="modalRoomDownpayment"></span></p>
 
@@ -96,22 +109,25 @@
                     <input type="hidden" name="contact" value="{{ $contact ?? '' }}" />
                     <input type="hidden" name="guests" value="{{ $guests ?? '' }}" />
                     <input type="hidden" name="payment_method" id="hiddenPaymentMethod" value="gcash" />
+                    <input type="hidden" name="total_price" id="hiddenTotalPrice" value="" />
 
                     <!-- Add-ons Section -->
                     <div class="mb-3">
                         <label class="form-label">Add Ons</label>
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" name="addons[]" value="Jetski Rental" id="addonJetski">
-                            <label class="form-check-label" for="addonJetski">Jetski Rental</label>
+                            <label class="form-check-label" for="addonJetski">Jetski Rental - ₱{{ number_format(5000, 2) }}</label>
                         </div>
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" name="addons[]" value="Atv" id="addonAtv">
-                            <label class="form-check-label" for="addonAtv">Atv</label>
+                            <label class="form-check-label" for="addonAtv">Atv - ₱{{ number_format(1000, 2) }}</label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="addons[]" value="None" id="addonNone">
+                            <!-- 'None' is not sent with the form; it simply clears other selections -->
+                            <input class="form-check-input" type="checkbox" id="addonNone">
                             <label class="form-check-label" for="addonNone">None</label>
                         </div>
+                        <div id="selectedAddonsList" class="mt-2"><small class="text-muted">No add-ons selected</small></div>
                         <!-- Add more add-ons as needed -->
                     </div>
 
@@ -181,12 +197,18 @@
 
     let baseRoomPrice = 0;
 
-    function showConfirmationModal(roomId, roomName, roomPrice) {
+    function showConfirmationModal(roomId, roomName, roomPrice, nights) {
+        // Defensive parsing and debug logs
+        console.log('showConfirmationModal called', {roomId, roomName, roomPrice, nights});
         document.getElementById("modalRoomId").value = roomId;
         document.getElementById("modalRoomName").textContent = roomName;
-        document.getElementById("modalRoomPrice").textContent = parseFloat(roomPrice).toFixed(2);
-        document.getElementById("modalRoomDownpayment").textContent = (roomPrice / 2).toFixed(2);
-        baseRoomPrice = parseFloat(roomPrice);
+        const pricePerNight = Number(String(roomPrice).replace(/[^0-9.-]+/g, '')) || 0;
+        const nightsInt = parseInt(nights) || 1;
+        document.getElementById("modalRoomPricePerNight").textContent = pricePerNight.toFixed(2);
+        document.getElementById("modalNights").textContent = nightsInt;
+        baseRoomPrice = pricePerNight * nightsInt;
+        document.getElementById("modalRoomPrice").textContent = baseRoomPrice.toFixed(2);
+        document.getElementById("modalRoomDownpayment").textContent = (baseRoomPrice / 2).toFixed(2);
         updateTotalPrice();
         var modal = new bootstrap.Modal(document.getElementById("confirmationModal"));
         modal.show();
@@ -194,20 +216,50 @@
 
     function updateTotalPrice() {
         let total = baseRoomPrice;
+        let selectedAddons = [];
+        let addonsTotal = 0;
         document.querySelectorAll('input[name="addons[]"]:checked').forEach(function(checkbox) {
             if (addonPrices[checkbox.value]) {
-                total += addonPrices[checkbox.value];
+                addonsTotal += addonPrices[checkbox.value];
+                selectedAddons.push(checkbox.value);
             }
         });
+        total += addonsTotal;
         document.getElementById("modalRoomPrice").textContent = total.toFixed(2);
         document.getElementById("modalRoomDownpayment").textContent = (total / 2).toFixed(2);
+        // update selected addons list display
+        const sel = document.getElementById('selectedAddonsList');
+        if (selectedAddons.length > 0) {
+            sel.innerHTML = '<small class="text-muted">Add-ons: ' + selectedAddons.join(', ') + ' (₱' + addonsTotal.toFixed(2) + ')</small>';
+        } else {
+            sel.innerHTML = '<small class="text-muted">No add-ons selected</small>';
+        }
+        // set hidden total for form submission (plain number)
+        const hiddenTotal = document.getElementById('hiddenTotalPrice');
+        if (hiddenTotal) { hiddenTotal.value = total; }
+        console.log('updateTotalPrice', { total, addonsTotal, selectedAddons });
     }
 
     // Listen for changes on add-on checkboxes (inside modal)
     document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('input[name="addons[]"]').forEach(function(checkbox) {
-            checkbox.addEventListener('change', updateTotalPrice);
+            checkbox.addEventListener('change', function() {
+                // uncheck 'None' when any addon is selected
+                const none = document.getElementById('addonNone');
+                if (none && checkbox.checked) none.checked = false;
+                updateTotalPrice();
+            });
         });
+        const noneCheckbox = document.getElementById('addonNone');
+        if (noneCheckbox) {
+            noneCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    // clear all addon checkboxes with name addons[]
+                    document.querySelectorAll('input[name="addons[]"]').forEach(function(cb) { cb.checked = false; });
+                }
+                updateTotalPrice();
+            });
+        }
     });
 
     function selectPayment(method) {
