@@ -24,12 +24,6 @@
                                 Manage Rooms
                             </a>
                         </li>
-                        <li class="list-group-item py-3">
-                            <a href="{{ url('/admin/payments') }}" class="d-flex align-items-center text-decoration-none text-dark fw-semibold">
-                                <i class="bi bi-cash-coin me-3 fs-4 text-warning"></i>
-                                Proof of Payments
-                            </a>
-                        </li>
                     </ul>
                 </div>
             </div>

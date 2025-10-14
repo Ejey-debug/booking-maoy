@@ -92,6 +92,19 @@
         </div>
     </div>
 
+    <!-- 🌍 Embedded Map -->
+    <div class="d-flex justify-content-center mb-3">
+        <div class="ratio ratio-4x3" style="max-width: 500px; height: 300px;">
+            <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d833.5350098330586!2d120.4262974223769!3d16.167700853476685!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33916f001ad74497%3A0x7008bcefb32cd9b4!2sSOHU%20BEACH%20CLUB!5e1!3m2!1sen!2sph!4v1757008554899!5m2!1sen!2sph"
+                style="border:0; border-radius: 12px; width:100%; height:100%;"
+                allowfullscreen=""
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade">
+            </iframe>
+        </div>
+    </div>
+
     <!-- FAQ Section -->
     <div class="container my-5">
         <div class="text-center mb-4">

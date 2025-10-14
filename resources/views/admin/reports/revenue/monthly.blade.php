@@ -5,6 +5,9 @@
 <div class="container py-4">
     <h2 class="mb-4 fw-bold">Monthly Revenue Summary</h2>
     <div class="d-flex justify-content-end mb-2">
+        <a href="{{ route('admin.reports.revenue.monthly.export', ['month' => request('month')]) }}" class="btn btn-outline-success me-2">
+            <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export CSV
+        </a>
         <button onclick="printMonthlyRevenue()" class="btn btn-outline-primary">
             <i class="bi bi-printer me-1"></i> Print
         </button>
@@ -26,40 +29,63 @@
                 $month = request('month', \Carbon\Carbon::now()->format('Y-m'));
                 $reservations = \App\Models\Reservation::whereYear('created_at', \Carbon\Carbon::parse($month)->year)
                     ->whereMonth('created_at', \Carbon\Carbon::parse($month)->month)
+                    ->orderBy('created_at', 'desc')
                     ->get();
-                    // Add-on prices (same as controller)
-                    $addonPrices = [
-                        'Jetski Rental' => 5000,
-                        'Atv' => 1000,
-                    ];
-                    // Sum using total_price when present, otherwise compute from room price * nights + addons
-                    $totalRevenue = $reservations->reduce(function($carry, $res) use ($addonPrices) {
-                        $price = 0;
-                        // compute addons total
-                        $addons = json_decode($res->addons ?? '[]', true) ?: [];
-                        $addonsTotal = 0;
-                        foreach ($addons as $a) {
-                            if (isset($addonPrices[$a])) $addonsTotal += $addonPrices[$a];
-                        }
 
-                        if (!is_null($res->total_price)) {
-                            $price = (float) $res->total_price;
-                        } else {
-                            $roomPrice = optional($res->room)->price ?? 0;
-                            try {
-                                $nights = \Carbon\Carbon::parse($res->check_out_date)->diffInDays(\Carbon\Carbon::parse($res->check_in_date));
-                                if ($nights < 1) $nights = 1;
-                            } catch (Exception $e) {
-                                $nights = 1;
-                            }
-                            $price = ($roomPrice * $nights) + $addonsTotal;
-                        }
-                        return $carry + $price;
-                    }, 0);
+                $addonPrices = [
+                    'Jetski Rental' => 5000,
+                    'Atv' => 1000,
+                ];
+
+                // safer calculation
+                $totalRevenue = 0;
+                $totalAddons = 0;
+                $totalRoom = 0;
+
+                foreach ($reservations as $res) {
+                    // parse addons (handle string or array)
+                    $addons = $res->addons ?? [];
+                    if (is_string($addons)) {
+                        $addons = json_decode($addons, true) ?: [];
+                    }
+                    $addons = is_array($addons) ? $addons : [];
+
+                    $addonsTotal = 0;
+                    foreach ($addons as $a) {
+                        if (isset($addonPrices[$a])) $addonsTotal += $addonPrices[$a];
+                    }
+
+                    // compute room*nights
+                    $roomPrice = optional($res->room)->price ?? 0;
+                    try {
+                        $nights = \Carbon\Carbon::parse($res->check_out_date)->diffInDays(\Carbon\Carbon::parse($res->check_in_date));
+                        if ($nights < 1) $nights = 1;
+                    } catch (\Exception $e) {
+                        $nights = 1;
+                    }
+                    $computedRoomTotal = $roomPrice * $nights;
+
+                    // determine reservation total: prefer stored total_price if present (assumed full),
+                    // otherwise compute from room+nights + addons
+                    if (!is_null($res->total_price)) {
+                        $reservationTotal = (float)$res->total_price;
+                    } else {
+                        $reservationTotal = $computedRoomTotal + $addonsTotal;
+                    }
+
+                    // accumulate
+                    $totalRevenue += $reservationTotal;
+                    $totalAddons += $addonsTotal;
+                    $totalRoom += $computedRoomTotal;
+                }
             @endphp
             <div class="mb-3">
                 <h5 class="fw-bold">Month: {{ \Carbon\Carbon::parse($month)->format('F Y') }}</h5>
                 <p>Total Revenue: <span class="fw-bold text-success">₱{{ number_format($totalRevenue, 2) }}</span></p>
+                <div class="small text-muted">
+                    <div>Room subtotal : ₱{{ number_format($totalRoom,2) }}</div>
+                    <div>Add-ons subtotal : ₱{{ number_format($totalAddons,2) }}</div>
+                </div>
             </div>
             <table class="table table-bordered align-middle">
                 <thead>
@@ -77,13 +103,18 @@
                     @forelse($reservations as $reservation)
                         <tr>
                             <td>{{ $loop->iteration }}</td>
-                            <td>{{ $reservation->room->name ?? 'N/A' }}</td>
+                            <td>{{ optional($reservation->room)->name ?? 'N/A' }}</td>
                             <td>{{ $reservation->name ?? 'N/A' }}</td>
                             <td>{{ $reservation->check_in_date }}</td>
                             <td>{{ $reservation->check_out_date }}</td>
                             @php
-                                // parse addons and compute addon totals
-                                $addons = json_decode($reservation->addons ?? '[]', true) ?: [];
+                                // parse addons (handle both array and JSON string) and compute addon totals
+                                $addons = $reservation->addons ?? [];
+                                if (is_string($addons)) {
+                                    $addons = json_decode($addons, true) ?: [];
+                                }
+                                $addons = is_array($addons) ? $addons : [];
+
                                 $addonsTotal = 0;
                                 foreach ($addons as $a) {
                                     if (isset($addonPrices[$a])) $addonsTotal += $addonPrices[$a];
@@ -91,21 +122,19 @@
 
                                 if (!is_null($reservation->total_price)) {
                                     $displayTotal = (float) $reservation->total_price;
-                                    $note = '';
                                 } else {
                                     $roomPrice = optional($reservation->room)->price ?? 0;
                                     try {
                                         $nights = \Carbon\Carbon::parse($reservation->check_out_date)->diffInDays(\Carbon\Carbon::parse($reservation->check_in_date));
                                         if ($nights < 1) $nights = 1;
-                                    } catch (Exception $e) {
+                                    } catch (\Exception $e) {
                                         $nights = 1;
                                     }
                                     $displayTotal = ($roomPrice * $nights) + $addonsTotal;
-                                    $note = ' <small class="text-muted">(computed)</small>';
                                 }
                             @endphp
                             <td>
-                                ₱{{ number_format($displayTotal, 2) }}{!! $note !!}
+                                ₱{{ number_format($displayTotal, 2) }}
                                 @if(!empty($addons))
                                     <div><small class="text-muted">Add-ons: {{ implode(', ', $addons) }} (₱{{ number_format($addonsTotal, 2) }})</small></div>
                                 @endif

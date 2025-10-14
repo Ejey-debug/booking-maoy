@@ -50,36 +50,66 @@ class ReservationController extends Controller
                 'room_id'        => 'required|exists:rooms,id',
                 'check_in_date'  => 'required|date',
                 'check_out_date' => 'required|date|after:check_in_date',
-                'payment_proof'  => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-                'addons'         => 'array',
-                'addons.*'       => 'string',
+                // payment_proof is optional now (we use reference_number / payment_mode)
+                'payment_proof'    => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'reference_number' => 'nullable|string|max:255',
+                'payment_mode'     => 'nullable|string|max:100',
+                'addons'           => 'array',
+                'addons.*'         => 'string',
+                'name'             => 'nullable|string|max:255',
+                'email'            => 'nullable|email|max:255',
+                'contact'          => 'nullable|string|max:30',
+                'guests'           => 'nullable|integer|min:1',
             ]);
+
+            // ensure value is present in payload
+            $validated['payment_mode'] = $validated['payment_mode'] ?? $request->input('payment_mode');
+            $validated['reference_number'] = $validated['reference_number'] ?? $request->input('reference_number');
+            $validated['addons']           = $validated['addons'] ?? $request->input('addons', );
 
             // Handle file upload
             if ($request->hasFile('payment_proof')) {
-                $validated['payment_proof'] = $request->file('payment_proof')->store('payment_proofs', 'public');
+                $validated['payment_proof'] = $request->file('payment_proof')->store('payments', 'public');
             }
 
-            // Add-on prices (hardcoded)
+            // --- safe total computation (room*nights + addons) ---
+            $selectedAddons = $request->input('addons', []);
+            $selectedAddons = is_array($selectedAddons) ? $selectedAddons : (empty($selectedAddons) ? [] : explode(',', $selectedAddons));
+
             $addonPrices = [
                 'Jetski Rental' => 5000,
                 'Atv' => 1000,
             ];
-            $selectedAddons = $request->input('addons', []);
+
             $addonsTotal = 0;
             foreach ($selectedAddons as $addon) {
                 if (isset($addonPrices[$addon])) {
-                    $addonsTotal += $addonPrices[$addon];
+                    $addonsTotal += (float) $addonPrices[$addon];
                 }
             }
 
-            // Calculate total price (room price * nights + add-ons)
-            $room = \App\Models\Room::find($request->room_id);
-            $nights = \Carbon\Carbon::parse($request->check_out_date)->diffInDays(\Carbon\Carbon::parse($request->check_in_date));
-            $roomTotal = $room->price * $nights;
-            $calculatedTotalPrice = $roomTotal + $addonsTotal;
-            $validated['total_price'] = $calculatedTotalPrice;
-            $validated['addons'] = json_encode($selectedAddons);
+            $room = Room::find($request->room_id);
+            $roomPrice = max(0, (float) optional($room)->price);
+            $nights = 1;
+            if ($request->filled('check_in_date') && $request->filled('check_out_date')) {
+                try {
+                    $nights = \Carbon\Carbon::parse($request->check_out_date)
+                        ->diffInDays(\Carbon\Carbon::parse($request->check_in_date));
+                    $nights = max(1, (int)$nights);
+                } catch (\Exception $e) {
+                    $nights = 1;
+                }
+            }
+
+            // ensure non-negative final total
+            $calculatedTotal = max(0, ($roomPrice * $nights) + $addonsTotal);
+
+            $validated['addons'] = $selectedAddons;
+            $validated['total_price'] = $calculatedTotal;
+            // --- end safe computation ---
+
+            // store addons as an array (not a JSON string) so views can render without "[]"
+            $validated['addons'] = is_array($selectedAddons) ? $selectedAddons : (empty($selectedAddons) ? [] : explode(',', $selectedAddons));
 
             // Ensure required DB columns have values (hotfix)
             $validated['user_id'] = $validated['user_id'] ?? null;

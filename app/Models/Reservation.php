@@ -9,13 +9,15 @@ class Reservation extends Model
     use HasFactory;
 
     protected $fillable = [
-        'room_id',        // ✅ add this
-        'name',
-        'email',
-        'contact',
-        'check_in_date',
-        'check_out_date',
-        'guests',
+        'room_id','user_id','name','email','contact','guests',
+        'check_in_date','check_out_date','payment_proof',
+        'reference_number','payment_mode',
+        'addons','total_price','status'
+    ];
+
+    protected $casts = [
+        'addons' => 'array',
+        'total_price' => 'float',
     ];
 
     public function room()

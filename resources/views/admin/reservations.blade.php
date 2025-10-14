@@ -30,7 +30,7 @@
                 <tbody>
                     @php
                         use Carbon\Carbon;
-                        $reservations = \App\Models\Reservation::with('room')->orderBy('check_in_date', 'desc')->get();
+                        $reservations = \App\Models\Reservation::with('room')->orderBy('created_at', 'desc')->get();
                     @endphp
                     @forelse($reservations as $reservation)
                         <tr>

@@ -43,33 +43,37 @@
                         <th>Email</th>
                         <th>Contact</th>
                         <th>Add-ons</th>
+                        <th>Reference</th>
+                        <th>Payment Mode</th>
                         <th>Booked At</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($bookings as $booking)
+                         <tr>
+                             <td>{{ $loop->iteration }}</td>
+                             <td>{{ $booking->room->name ?? 'N/A' }}</td>
+                             <td>{{ $booking->name }}</td>
+                             <td>{{ $booking->email }}</td>
+                             <td>{{ $booking->contact }}</td>
+                             <td>
+                                 @if(!empty($booking->addons))
+                                     @if(is_array($booking->addons))
+                                         {{ implode(', ', $booking->addons) }}
+                                     @else
+                                         {{ $booking->addons }}
+                                     @endif
+                                 @else
+                                     <span class="text-muted">None</span>
+                                 @endif
+                             </td>
+                            <td>{{ $booking->reference_number ?? '—' }}</td>
+                            <td>{{ $booking->payment_mode ?? '—' }}</td>
+                             <td>{{ $booking->created_at->format('Y-m-d h:i A') }}</td>
+                         </tr>
+                     @empty
                         <tr>
-                            <td>{{ $loop->iteration }}</td>
-                            <td>{{ $booking->room->name ?? 'N/A' }}</td>
-                            <td>{{ $booking->name }}</td>
-                            <td>{{ $booking->email }}</td>
-                            <td>{{ $booking->contact }}</td>
-                            <td>
-                                @if(!empty($booking->addons))
-                                    @if(is_array($booking->addons))
-                                        {{ implode(', ', $booking->addons) }}
-                                    @else
-                                        {{ $booking->addons }}
-                                    @endif
-                                @else
-                                    <span class="text-muted">None</span>
-                                @endif
-                            </td>
-                            <td>{{ $booking->created_at->format('Y-m-d h:i A') }}</td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="7" class="text-center">No bookings found.</td>
+                            <td colspan="9" class="text-center">No bookings found.</td>
                         </tr>
                     @endforelse
                 </tbody>

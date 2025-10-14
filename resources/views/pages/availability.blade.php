@@ -81,8 +81,6 @@
             </div>
             <div class="modal-body">
                 <p><strong>Room:</strong> <span id="modalRoomName"></span></p>
-                <p><strong>Price per night:</strong> ₱<span id="modalRoomPricePerNight"></span></p>
-                <p><strong>Nights:</strong> <span id="modalNights"></span></p>
                 <p><strong>Total Price:</strong> ₱<span id="modalRoomPrice"></span></p>
                 <p><strong>50% Downpayment:</strong> ₱<span id="modalRoomDownpayment"></span></p>
 
@@ -108,7 +106,7 @@
                     <input type="hidden" name="email" value="{{ $email ?? '' }}" />
                     <input type="hidden" name="contact" value="{{ $contact ?? '' }}" />
                     <input type="hidden" name="guests" value="{{ $guests ?? '' }}" />
-                    <input type="hidden" name="payment_method" id="hiddenPaymentMethod" value="gcash" />
+                    <input type="hidden" name="payment_mode" id="hiddenPaymentMode" value="GCash" />
                     <input type="hidden" name="total_price" id="hiddenTotalPrice" value="" />
 
                     <!-- Add-ons Section -->
@@ -132,8 +130,9 @@
                     </div>
 
                     <div class="mb-2">
-                        <label for="modalPaymentProof" class="form-label">Proof of Payment</label>
-                        <input type="file" class="form-control" id="modalPaymentProof" name="payment_proof" accept="image/*" required>
+                        <label for="modalReferenceNumber" class="form-label">Payment Reference Number</label>
+                        <input type="text" class="form-control" id="modalReferenceNumber" name="reference_number" placeholder="Enter payment reference number" required>
+                        <div class="form-text">Enter the transaction / reference number from your payment.</div>
                     </div>
 
                     <!-- Terms and Conditions Checkbox -->
@@ -198,14 +197,12 @@
     let baseRoomPrice = 0;
 
     function showConfirmationModal(roomId, roomName, roomPrice, nights) {
-        // Defensive parsing and debug logs
         console.log('showConfirmationModal called', {roomId, roomName, roomPrice, nights});
         document.getElementById("modalRoomId").value = roomId;
         document.getElementById("modalRoomName").textContent = roomName;
         const pricePerNight = Number(String(roomPrice).replace(/[^0-9.-]+/g, '')) || 0;
         const nightsInt = parseInt(nights) || 1;
-        document.getElementById("modalRoomPricePerNight").textContent = pricePerNight.toFixed(2);
-        document.getElementById("modalNights").textContent = nightsInt;
+        // compute total but only display total and downpayment (no per-night or nights UI)
         baseRoomPrice = pricePerNight * nightsInt;
         document.getElementById("modalRoomPrice").textContent = baseRoomPrice.toFixed(2);
         document.getElementById("modalRoomDownpayment").textContent = (baseRoomPrice / 2).toFixed(2);
@@ -263,7 +260,7 @@
     });
 
     function selectPayment(method) {
-        document.getElementById("hiddenPaymentMethod").value = method;
+        document.getElementById("hiddenPaymentMode").value = method;
 
         let qrSection = document.getElementById("qrSection");
         let qrCodeImage = document.getElementById("qrCodeImage");

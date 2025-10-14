@@ -26,7 +26,7 @@
                             <td>{{ $loop->iteration }}</td>
                             <td>{{ $user->name }}</td>
                             <td>{{ $user->email }}</td>
-                            <td>{{ $user->created_at->format('Y-m-d h:i A') }}</td>
+                            <td>{{ optional($user->created_at)->format('Y-m-d h:i A') ?? '-' }}</td>
                         </tr>
                     @empty
                         <tr>

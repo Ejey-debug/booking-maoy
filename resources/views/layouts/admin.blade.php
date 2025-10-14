@@ -33,6 +33,11 @@
                         <i class="bi bi-people me-2"></i> Users
                     </a>
                 </li>
+                <li>
+                    <a href="{{ url('/admin/inventory') }}" class="nav-link text-white">
+                        <i class="bi bi-box-seam me-2"></i> Inventory
+                    </a>
+                </li>
                 <!-- Reports & Analytics Section -->
                 <li class="mt-3">
                     <span class="text-uppercase text-secondary fw-bold small ms-2">Reports & Analytics</span>
