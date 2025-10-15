@@ -15,7 +15,7 @@ use Carbon\Carbon;
 /*
 | Public Routes
 */
-Route::view('/', 'pages.home')->name('home');
+Route::view('/', 'pages.homed')->name('home');
 Route::view('/about', 'pages.about')->name('about');
 Route::view('/services', 'pages.services')->name('services');
 Route::view('/accommodations', 'pages.accommodations')->name('accommodations');
