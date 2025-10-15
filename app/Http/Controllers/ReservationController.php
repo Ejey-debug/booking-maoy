@@ -7,7 +7,6 @@ use App\Models\Reservation;
 use App\Models\Room;
 use App\Models\User;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Log;
 
 class ReservationController extends Controller
 {
@@ -66,7 +65,7 @@ class ReservationController extends Controller
             // ensure value is present in payload
             $validated['payment_mode'] = $validated['payment_mode'] ?? $request->input('payment_mode');
             $validated['reference_number'] = $validated['reference_number'] ?? $request->input('reference_number');
-            $validated['addons'] = $validated['addons'] ?? $request->input('addons');
+            $validated['addons']           = $validated['addons'] ?? $request->input('addons', );
 
             // Handle file upload
             if ($request->hasFile('payment_proof')) {
@@ -120,21 +119,6 @@ class ReservationController extends Controller
             $validated['guests']  = $validated['guests']  ?? 1;
 
             $reservation = Reservation::create($validated);
-
-            // send confirmation email (non-blocking safe send)
-            try {
-                if (!empty($reservation->email)) {
-                    \Illuminate\Support\Facades\Mail::raw(
-                        "Hi {$reservation->name}, your reservation is confirmed. Reference: {$reservation->id}",
-                        function ($msg) use ($reservation) {
-                            $msg->to($reservation->email)
-                                ->subject('Reservation Confirmation - So Hu Beach Club');
-                        }
-                    );
-                }
-            } catch (\Throwable $e) {
-                Log::error('Reservation email failed: '.$e->getMessage());
-            }
 
             $successMsg = 'Your booking was successful! Please check your email for confirmation.';
 

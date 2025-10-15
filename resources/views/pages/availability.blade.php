@@ -46,6 +46,7 @@
                         <h5 class="card-title">{{ $room->name }}</h5>
                         <p class="card-text">{{ $room->description }}</p>
                         <p class="card-text">
+                            <strong>Capacity:</strong> 3-6 persons</p>
                             <strong>Total Price:</strong> ₱{{ number_format($room->price, 2) }} <br>
                             <strong>50% Downpayment:</strong> ₱{{ number_format($room->price / 2, 2) }}
                         </p>
